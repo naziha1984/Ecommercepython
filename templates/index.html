@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - E-Commerce IA{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="hero-section bg-gradient-primary text-white p-5 rounded-3">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-4 fw-bold mb-3">
+                            <i class="fas fa-robot me-3"></i>
+                            Bienvenue sur E-Commerce IA
+                        </h1>
+                        <p class="lead mb-4">
+                            Découvrez une expérience d'achat révolutionnaire avec nos recommandations 
+                            personnalisées alimentées par l'intelligence artificielle.
+                        </p>
+                        {% if not session.user_id %}
+                        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg me-3">
+                            <i class="fas fa-user-plus me-2"></i>Créer un compte
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-shopping-cart fa-10x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommandations personnalisées -->
+    {% if session.user_id and recommendations %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-magic me-2 text-primary"></i>
+                Recommandations pour vous
+            </h2>
+            <div class="row">
+                {% for product in recommendations %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100 shadow-sm recommendation-card">
+                        {% if product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text text-muted small">{{ product.description[:100] }}...</p>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="h5 text-primary mb-0">{{ "%.2f"|format(product.price) }} €</span>
+                                    <span class="badge bg-info">{{ product.category }}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-primary btn-sm me-2">
+                                        <i class="fas fa-eye me-1"></i>Voir
+                                    </a>
+                                    <button class="btn btn-primary btn-sm add-to-cart" data-product-id="{{ product.id }}">
+                                        <i class="fas fa-cart-plus me-1"></i>Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-3">
+                <a href="{{ url_for('recommendations') }}" class="btn btn-primary">
+                    <i class="fas fa-magic me-2"></i>Voir toutes les recommandations
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Catalogue des produits -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-store me-2 text-primary"></i>
+                Notre catalogue
+            </h2>
+            
+            {% if products %}
+            <div class="row">
+                {% for product in products %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100 shadow-sm product-card">
+                        {% if product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text text-muted small">{{ product.description[:100] }}...</p>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="h5 text-primary mb-0">{{ "%.2f"|format(product.price) }} €</span>
+                                    <span class="badge bg-info">{{ product.category }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-box me-1"></i>
+                                        Stock: {{ product.stock_quantity }}
+                                    </small>
+                                    {% if product.stock_quantity > 0 %}
+                                    <span class="badge bg-success">Disponible</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Rupture</span>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-primary btn-sm me-2">
+                                        <i class="fas fa-eye me-1"></i>Détails
+                                    </a>
+                                    {% if product.stock_quantity > 0 %}
+                                    <button class="btn btn-primary btn-sm add-to-cart" data-product-id="{{ product.id }}">
+                                        <i class="fas fa-cart-plus me-1"></i>Ajouter
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled>
+                                        <i class="fas fa-times me-1"></i>Indisponible
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+                <h3 class="text-muted">Aucun produit disponible</h3>
+                <p class="text-muted">Les produits seront bientôt disponibles.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des boutons "Ajouter au panier"
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            
+            // Vérification de la connexion
+            {% if not session.user_id %}
+            window.location.href = "{{ url_for('login') }}";
+            return;
+            {% endif %}
+            
+            // Ajout au panier via AJAX
+            fetch(`/add_to_cart/${productId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Mise à jour du compteur du panier
+                    updateCartCount();
+                    
+                    // Animation de succès
+                    this.innerHTML = '<i class="fas fa-check me-1"></i>Ajouté!';
+                    this.classList.remove('btn-primary');
+                    this.classList.add('btn-success');
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-cart-plus me-1"></i>Ajouter';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-primary');
+                    }, 2000);
+                } else {
+                    alert('Erreur lors de l\'ajout au panier');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors de l\'ajout au panier');
+            });
+        });
+    });
+    
+    // Fonction pour mettre à jour le compteur du panier
+    function updateCartCount() {
+        fetch('/cart')
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const cartItems = doc.querySelectorAll('.cart-item');
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) {
+                cartCount.textContent = cartItems.length;
+            }
+        })
+        .catch(error => console.error('Erreur lors de la mise à jour du panier:', error));
+    }
+    
+    // Mise à jour initiale du compteur
+    {% if session.user_id %}
+    updateCartCount();
+    {% endif %}
+});
+</script>
+{% endblock %}
+

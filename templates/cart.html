@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Panier - E-Commerce IA{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-shopping-cart me-2 text-primary"></i>
+                Mon panier
+            </h2>
+            
+            {% if cart_items %}
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-body">
+                            {% for item in cart_items %}
+                            <div class="row align-items-center py-3 border-bottom cart-item">
+                                <div class="col-md-2">
+                                    {% if item.product.image_url %}
+                                    <img src="{{ item.product.image_url }}" class="img-fluid rounded" alt="{{ item.product.name }}" style="height: 80px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 80px;">
+                                        <i class="fas fa-image fa-2x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <h5 class="mb-1">{{ item.product.name }}</h5>
+                                    <p class="text-muted small mb-0">{{ item.product.category }}</p>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <span class="h6 mb-0">{{ "%.2f"|format(item.product.price) }} €</span>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <div class="input-group">
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="updateQuantity({{ item.id }}, {{ item.quantity - 1 }})">-</button>
+                                        <input type="number" class="form-control text-center" value="{{ item.quantity }}" min="1" readonly>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="updateQuantity({{ item.id }}, {{ item.quantity + 1 }})">+</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <span class="h6 text-primary">{{ "%.2f"|format(item.get_total_price()) }} €</span>
+                                </div>
+                                
+                                <div class="col-md-2 text-end">
+                                    <a href="{{ url_for('remove_from_cart', cart_item_id=item.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Supprimer cet article ?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-calculator me-2"></i>
+                                Résumé de la commande
+                            </h5>
+                            
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Sous-total :</span>
+                                <span>{{ "%.2f"|format(total) }} €</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Livraison :</span>
+                                <span class="text-success">Gratuite</span>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="d-flex justify-content-between h5">
+                                <span>Total :</span>
+                                <span class="text-primary">{{ "%.2f"|format(total) }} €</span>
+                            </div>
+                            
+                            <div class="d-grid mt-4">
+                                <a href="{{ url_for('checkout') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    Finaliser la commande
+                                </a>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Continuer mes achats
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+                <h3 class="text-muted">Votre panier est vide</h3>
+                <p class="text-muted">Découvrez nos produits et ajoutez-les à votre panier.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-store me-2"></i>Voir nos produits
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateQuantity(cartItemId, newQuantity) {
+    if (newQuantity < 1) {
+        if (confirm('Supprimer cet article du panier ?')) {
+            window.location.href = `/remove_from_cart/${cartItemId}`;
+        }
+        return;
+    }
+    
+    // Ici vous pourriez ajouter une logique AJAX pour mettre à jour la quantité
+    // Pour l'instant, on recharge la page
+    window.location.href = `/update_cart_quantity/${cartItemId}/${newQuantity}`;
+}
+</script>
+{% endblock %}
+
