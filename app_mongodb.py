@@ -341,7 +341,7 @@ def purchase_history():
 def recommendations():
     """Page des recommandations personnalisées."""
     if 'user_id' not in session:
-        flash('Vous devez être connecté pour voir vos recommandations', 'error')
+        flash('Connectez-vous pour voir vos recommandations personnalisées', 'info')
         return redirect(url_for('login'))
     
     try:
