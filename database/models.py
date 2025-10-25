@@ -16,7 +16,10 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Cette variable sera importée depuis app.py
-db = None
+from flask_sqlalchemy import SQLAlchemy
+
+# Création d'une instance SQLAlchemy temporaire
+db = SQLAlchemy()
 
 def init_db(database):
     """

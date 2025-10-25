@@ -4,7 +4,7 @@ E-COMMERCE IA - APPLICATION FINALE PROPRE
 Version complète et fonctionnelle avec toutes les fonctionnalités
 """
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -331,58 +331,6 @@ def create_sample_data():
             
             mongo.db.users.insert_many(users_data)
             logger.info("Utilisateurs d'exemple créés")
-        
-        # Création d'achats d'exemple pour le test
-        if mongo.db.purchases.count_documents({}) == 0:
-            # Récupérer l'ID de l'utilisateur test
-            test_user = mongo.db.users.find_one({'username': 'test'})
-            if test_user:
-                test_user_id = str(test_user['_id'])
-                
-                # Récupérer quelques produits
-                sample_products = list(mongo.db.product.find().limit(3))
-                
-                if sample_products:
-                    # Créer des achats d'exemple
-                    sample_purchases = [
-                        {
-                            'user_id': test_user_id,
-                            'items': [
-                                {
-                                    'product_id': str(sample_products[0]['_id']),
-                                    'product_name': sample_products[0]['name'],
-                                    'price': sample_products[0]['price'],
-                                    'quantity': 2
-                                }
-                            ],
-                            'total': sample_products[0]['price'] * 2,
-                            'status': 'completed',
-                            'created_at': datetime.utcnow()
-                        },
-                        {
-                            'user_id': test_user_id,
-                            'items': [
-                                {
-                                    'product_id': str(sample_products[1]['_id']),
-                                    'product_name': sample_products[1]['name'],
-                                    'price': sample_products[1]['price'],
-                                    'quantity': 1
-                                },
-                                {
-                                    'product_id': str(sample_products[2]['_id']),
-                                    'product_name': sample_products[2]['name'],
-                                    'price': sample_products[2]['price'],
-                                    'quantity': 1
-                                }
-                            ],
-                            'total': sample_products[1]['price'] + sample_products[2]['price'],
-                            'status': 'completed',
-                            'created_at': datetime.utcnow()
-                        }
-                    ]
-                    
-                    mongo.db.purchases.insert_many(sample_purchases)
-                    logger.info("Achats d'exemple créés")
             
     except Exception as e:
         logger.error(f"Erreur création données: {e}")
@@ -680,26 +628,15 @@ def purchase_history():
         # Conversion des ObjectId en string pour chaque achat
         for purchase in purchases:
             purchase['id'] = str(purchase['_id'])
-            # Conversion des ObjectId des items si nécessaire
-            if 'items' in purchase:
-                for item in purchase['items']:
-                    if '_id' in item:
-                        item['id'] = str(item['_id'])
-                    # S'assurer que les champs nécessaires existent
-                    if 'product_name' not in item:
-                        item['product_name'] = 'Produit inconnu'
-                    if 'price' not in item:
-                        item['price'] = 0
-                    if 'quantity' not in item:
-                        item['quantity'] = 1
+            # Conversion des ObjectId des items
+            for item in purchase.get('items', []):
+                if '_id' in item:
+                    item['id'] = str(item['_id'])
         
-        logger.info(f"Historique chargé: {len(purchases)} achats trouvés")
         return render_template('purchase_history.html', purchases=purchases)
         
     except Exception as e:
         logger.error(f"Erreur historique: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
         flash('Erreur lors du chargement de l\'historique', 'error')
         return redirect(url_for('index'))
 
@@ -715,15 +652,6 @@ def cart_count():
     except Exception as e:
         logger.error(f"Erreur compteur panier: {e}")
         return jsonify({'count': 0})
-
-@app.route('/static/images/<filename>')
-def serve_image(filename):
-    """Servir les images statiques."""
-    try:
-        return send_from_directory('static/images', filename)
-    except Exception as e:
-        logger.error(f"Erreur chargement image {filename}: {e}")
-        return "Image non trouvée", 404
 
 # Routes d'administration
 @app.route('/admin')
@@ -789,28 +717,12 @@ def admin_add_product():
     
     if request.method == 'POST':
         try:
-            # Gestion de l'upload d'image
-            image_url = '/static/images/placeholder.svg'  # Par défaut
-            
-            if 'image' in request.files and request.files['image'].filename:
-                image_file = request.files['image']
-                if image_file and image_file.filename:
-                    # Sauvegarder l'image
-                    filename = f"product_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{image_file.filename}"
-                    image_path = os.path.join('static/uploads', filename)
-                    image_file.save(image_path)
-                    image_url = f'/static/uploads/{filename}'
-            
-            # Si une URL d'image est fournie dans le formulaire
-            elif request.form.get('image_url'):
-                image_url = request.form.get('image_url')
-            
             product_data = {
                 'name': request.form['name'],
                 'description': request.form['description'],
                 'price': float(request.form['price']),
                 'category': request.form['category'],
-                'image_url': image_url,
+                'image_url': request.form.get('image_url', '/static/images/placeholder.svg'),
                 'stock_quantity': int(request.form['stock_quantity']),
                 'created_at': datetime.utcnow(),
                 'is_active': request.form.get('is_active') == 'on'
